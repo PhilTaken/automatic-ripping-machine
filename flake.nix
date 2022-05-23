@@ -29,8 +29,8 @@
     in {
       automatic-ripping-machine = project.app;
     };
-  } // flake-utils.lib.eachDefaultSystem (system: let
-    pkgs = import nixpkgs{
+  } // flake-utils.lib.eachSystem [ flake-utils.lib.system.x86_64-linux ] (system: let
+    pkgs = import nixpkgs {
       overlays = [ self.overlay ];
       inherit system;
     };
@@ -45,8 +45,6 @@
       inherit (pkgs) automatic-ripping-machine;
     };
 
-    defaultPackage = self.packages.automatic-ripping-machine;
-
     checks = {
       pylint = pkgs.runCommandNoCC "pylint" {
         nativeBuildInputs = [ project.env ];
@@ -55,3 +53,4 @@
     };
   });
 }
+
