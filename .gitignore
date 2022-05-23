@@ -27,3 +27,5 @@ installed
 .idea/.name
 *config.py
 *arm_wrapper.sh
+
+tags

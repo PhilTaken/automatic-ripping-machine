@@ -1,3 +1,6 @@
+*Fork of the original [automatic ripping machine](https://github.com/automatic-ripping-machine/automatic-ripping-machine)*
+
+
 # Automatic Ripping Machine (ARM)
 [![CI](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/main.yml/badge.svg)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/actions/workflows/main.yml)[![GitHub license](https://img.shields.io/github/license/automatic-ripping-machine/automatic-ripping-machine?style=plastic)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/blob/v2_devel/LICENSE)
 [![GitHub forks](https://img.shields.io/github/forks/automatic-ripping-machine/automatic-ripping-machine?style=plastic)](https://github.com/automatic-ripping-machine/automatic-ripping-machine/network)
