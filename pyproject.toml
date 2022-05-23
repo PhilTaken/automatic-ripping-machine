@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "arm"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Markdown = "^3.3.7"
+pycurl = "^7.45.1"
+pydvdid = "^1.1"
+requests = "^2.27.1"
+urllib3 = "^1.26.9"
+xmltodict = "^0.13.0"
+pyudev = "^0.23.2"
+PyYAML = "^6.0"
+Flask = "^2.1.2"
+Flask-WTF = "^1.0.1"
+Flask-SQLAlchemy = "^2.5.1"
+Flask-Migrate = "^3.1.0"
+Flask-Cors = "^3.0.10"
+psutil = "^5.9.1"
+robobrowser = "^0.5.3"
+tinydownload = "^0.1.0"
+netifaces = "^0.11.0"
+Flask-Login = "^0.6.1"
+apprise = "^0.9.8"
+bcrypt = "^3.2.2"
+musicbrainzngs = "^0.7.1"
+discid = "^1.2.0"
+prettytable = "^3.3.0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+black = "^22.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
