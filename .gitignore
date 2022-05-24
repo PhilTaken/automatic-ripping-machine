@@ -12,7 +12,6 @@ __pycache*
 removed/*
 arm.conf
 *.pyc
-.gitignore
 arm.yaml
 *.db
 *.log
@@ -25,8 +24,9 @@ venv/*
 *.rar
 installed
 .idea/.name
-*config.py
-*arm_wrapper.sh
+# *config.py
+# *arm_wrapper.sh
 
 tags
 .direnv
+result
