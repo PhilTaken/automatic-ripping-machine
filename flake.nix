@@ -20,7 +20,7 @@
       app = p2n.mkPoetryApplication args;
     };
   in {
-    overlay = final: prev: let
+    overlays.default = final: prev: let
       pkgs = import nixpkgs {
         inherit (prev) system;
         overlays = [ poetry2nix.overlay ];
@@ -31,12 +31,12 @@
     };
   } // flake-utils.lib.eachSystem [ flake-utils.lib.system.x86_64-linux ] (system: let
     pkgs = import nixpkgs {
-      overlays = [ self.overlay ];
+      overlays = [ self.overlays.default ];
       inherit system;
     };
     project = projectWithPkgs pkgs;
   in {
-    devShell = pkgs.mkShell {
+    devShells.default = pkgs.mkShell {
       nativeBuildInputs = [ pkgs.bashInteractive ];
       buildInputs = [ pkgs.poetry pkgs.automatic-ripping-machine project.env ];
     };
@@ -45,11 +45,17 @@
       inherit (pkgs) automatic-ripping-machine;
     };
 
+    nixosModules.default = import ./nix/module.nix;
+
     checks = {
       pylint = pkgs.runCommandNoCC "pylint" {
         nativeBuildInputs = [ project.env ];
         preferLocalBuild = true;
         } "flake8 > $out";
+      evalnix = pkgs.runCommandNoCC "evalnix" {
+        nativeBuildInputs = [ pkgs.fd ];
+        preferLocalBuild = true;
+      } "fd --extension nix --exec nix-instantiate --parse --quiet {} > $out";
     };
   });
 }
