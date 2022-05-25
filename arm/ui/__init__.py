@@ -12,7 +12,7 @@ from getpass import getpass  # noqa: F401
 
 from flask_login import LoginManager
 
-sqlitefile = 'sqlite:///' + cfg['DBFILE']
+sqlitefile = "sqlite:///" + cfg["DBFILE"]
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*", "send_wildcard": "False"}})
@@ -20,11 +20,11 @@ CORS(app, resources={r"/*": {"origins": "*", "send_wildcard": "False"}})
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = sqlitefile
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = sqlitefile
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # We should really gen a key for each system
-app.config['SECRET_KEY'] = "Big secret key"
-app.config['LOGIN_DISABLED'] = cfg['DISABLE_LOGIN']
+app.config["SECRET_KEY"] = "Big secret key"
+app.config["LOGIN_DISABLED"] = cfg["DISABLE_LOGIN"]
 
 db = SQLAlchemy(app)
 

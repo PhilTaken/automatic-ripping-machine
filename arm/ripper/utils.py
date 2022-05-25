@@ -36,17 +36,23 @@ def notify(job, title, body):
     # Create an Apprise instance
     apobj = apprise.Apprise()
     if cfg["PB_KEY"] != "":
-        apobj.add('pbul://' + str(cfg["PB_KEY"]))
+        apobj.add("pbul://" + str(cfg["PB_KEY"]))
     if cfg["IFTTT_KEY"] != "":
-        apobj.add('ifttt://' + str(cfg["IFTTT_KEY"]) + "@" + str(cfg["IFTTT_EVENT"]))
+        apobj.add("ifttt://" + str(cfg["IFTTT_KEY"]) + "@" + str(cfg["IFTTT_EVENT"]))
     if cfg["PO_USER_KEY"] != "":
-        apobj.add('pover://' + str(cfg["PO_USER_KEY"]) + "@" + str(cfg["PO_APP_KEY"]))
+        apobj.add("pover://" + str(cfg["PO_USER_KEY"]) + "@" + str(cfg["PO_APP_KEY"]))
     if cfg["JSON_URL"] != "":
-        apobj.add(str(cfg["JSON_URL"]).replace("http://", "json://").replace("https://", "jsons://"))
+        apobj.add(
+            str(cfg["JSON_URL"])
+            .replace("http://", "json://")
+            .replace("https://", "jsons://")
+        )
     try:
         apobj.notify(body, title=title)
     except Exception as e:  # noqa: E722
-        logging.error(f"Failed sending notifications. error:{e}. Continuing processing...")
+        logging.error(
+            f"Failed sending notifications. error:{e}. Continuing processing..."
+        )
 
     if cfg["APPRISE"] != "":
         try:
@@ -60,10 +66,13 @@ def notify_entry(job):
     # Notify On Entry
     if job.disctype in ["dvd", "bluray"]:
         # Send the notifications
-        notify(job, NOTIFY_TITLE,
-               f"Found disc: {job.title}. Disc type is {job.disctype}. Main Feature is {cfg['MAINFEATURE']}"
-               f".  Edit entry here: http://{check_ip()}:"
-               f"{cfg['WEBSERVER_PORT']}/jobdetail?job_id={job.job_id}")
+        notify(
+            job,
+            NOTIFY_TITLE,
+            f"Found disc: {job.title}. Disc type is {job.disctype}. Main Feature is {cfg['MAINFEATURE']}"
+            f".  Edit entry here: http://{check_ip()}:"
+            f"{cfg['WEBSERVER_PORT']}/jobdetail?job_id={job.job_id}",
+        )
     elif job.disctype == "music":
         notify(job, NOTIFY_TITLE, f"Found music CD: {job.label}. Ripping all tracks")
     elif job.disctype == "data":
@@ -85,13 +94,15 @@ def scan_emby(job):
                 req.raise_for_status()
             logging.info("Emby Library Scan request successful")
         except requests.exceptions.HTTPError:
-            logging.error(f"Emby Library Scan request failed with status code: {req.status_code}")
+            logging.error(
+                f"Emby Library Scan request failed with status code: {req.status_code}"
+            )
     else:
         logging.info("EMBY_REFRESH config parameter is false.  Skipping emby scan.")
 
 
 def sleep_check_process(process_str, transcode_limit):
-    """ New function to check for max_transcode from cfg file and force obey limits\n
+    """New function to check for max_transcode from cfg file and force obey limits\n
     arguments:
     process_str - The process string from arm.yaml
     transcode_limit - The user defined limit for maximum transcodes\n\n
@@ -104,8 +115,12 @@ def sleep_check_process(process_str, transcode_limit):
         logging.debug("loop_count " + str(loop_count))
         logging.info("Starting A sleep check of " + str(process_str))
         while loop_count >= transcode_limit:
-            loop_count = sum(1 for proc in psutil.process_iter() if proc.name() == process_str)
-            logging.debug(f"Number of Processes running is: {loop_count} going to waiting 12 seconds.")
+            loop_count = sum(
+                1 for proc in psutil.process_iter() if proc.name() == process_str
+            )
+            logging.debug(
+                f"Number of Processes running is: {loop_count} going to waiting 12 seconds."
+            )
             if transcode_limit > loop_count:
                 return True
             # Try to make each check at different times
@@ -146,10 +161,16 @@ def move_files(basepath, filename, job, ismainfeature=False):
     type_sub_folder = convert_job_type(job.video_type)
     videotitle = fix_job_title(job)
 
-    logging.debug(f"Arguments: {basepath} : {filename} : {job.hasnicetitle} : {videotitle} : {ismainfeature}")
+    logging.debug(
+        f"Arguments: {basepath} : {filename} : {job.hasnicetitle} : {videotitle} : {ismainfeature}"
+    )
     m_path = os.path.join(cfg["COMPLETED_PATH"], str(type_sub_folder), videotitle)
     # For series there are no extras as we never get a main feature
-    e_path = os.path.join(m_path, cfg["EXTRAS_SUB"]) if job.video_type != "series" else m_path
+    e_path = (
+        os.path.join(m_path, cfg["EXTRAS_SUB"])
+        if job.video_type != "series"
+        else m_path
+    )
     make_dir(m_path)
 
     if ismainfeature is True:
@@ -168,7 +189,9 @@ def move_files(basepath, filename, job, ismainfeature=False):
         e_file = os.path.join(e_path, videotitle + "." + cfg["DEST_EXT"])
         if not os.path.isfile(e_file):
             try:
-                shutil.move(os.path.join(basepath, filename), os.path.join(e_path, filename))
+                shutil.move(
+                    os.path.join(basepath, filename), os.path.join(e_path, filename)
+                )
             except Exception as e:
                 logging.error(f"Unable to move '{filename}' to {e_path} - {e}")
         else:
@@ -214,7 +237,7 @@ def get_cdrom_status(devpath):
         fd = os.open(devpath, os.O_RDONLY | os.O_NONBLOCK)
     except OSError:
         # Sometimes ARM will log errors opening hard drives. this check should stop it
-        if not re.search(r'hd[a-j]|sd[a-j]|loop[0-9]', devpath):
+        if not re.search(r"hd[a-j]|sd[a-j]|loop[0-9]", devpath):
             logging.info(f"Failed to open device {devpath} to check status.")
         exit(2)
     result = fcntl.ioctl(fd, 0x5326, 0)
@@ -290,24 +313,24 @@ def rip_data(job, datapath, logfile):
 
         # Added from pull 366
         cmd = 'dd if="{0}" of="{1}" {2} 2>> {3}'.format(
-            job.devpath,
-            incomplete_filename,
-            cfg["DATA_RIP_PARAMETERS"],
-            logfile
+            job.devpath, incomplete_filename, cfg["DATA_RIP_PARAMETERS"], logfile
         )
 
         logging.debug("Sending command: " + cmd)
 
         try:
-            subprocess.check_output(
-                cmd,
-                shell=True
-            ).decode("utf-8")
+            subprocess.check_output(cmd, shell=True).decode("utf-8")
             logging.info("Data rip call successful")
             os.rename(incomplete_filename, final_filename)
             return True
         except subprocess.CalledProcessError as dd_error:
-            err = "Data rip failed with code: " + str(dd_error.returncode) + "(" + str(dd_error.output) + ")"
+            err = (
+                "Data rip failed with code: "
+                + str(dd_error.returncode)
+                + "("
+                + str(dd_error.output)
+                + ")"
+            )
             logging.error(err)
             os.unlink(incomplete_filename)
             # sys.exit(err)
@@ -322,27 +345,47 @@ def set_permissions(job, directory_to_traverse):
     :param directory_to_traverse: directory to fix permissions
     :return: Bool if fails
     """
-    if not cfg['SET_MEDIA_PERMISSIONS']:
+    if not cfg["SET_MEDIA_PERMISSIONS"]:
         return False
     try:
         corrected_chmod_value = int(str(cfg["CHMOD_VALUE"]), 8)
-        logging.info("Setting permissions to: " + str(cfg["CHMOD_VALUE"]) + " on: " + directory_to_traverse)
+        logging.info(
+            "Setting permissions to: "
+            + str(cfg["CHMOD_VALUE"])
+            + " on: "
+            + directory_to_traverse
+        )
         os.chmod(directory_to_traverse, corrected_chmod_value)
-        if job.config.SET_MEDIA_OWNER and job.config.CHOWN_USER and job.config.CHOWN_GROUP:
+        if (
+            job.config.SET_MEDIA_OWNER
+            and job.config.CHOWN_USER
+            and job.config.CHOWN_GROUP
+        ):
             import pwd
             import grp
+
             uid = pwd.getpwnam(job.config.CHOWN_USER).pw_uid
             gid = grp.getgrnam(job.config.CHOWN_GROUP).gr_gid
             os.chown(directory_to_traverse, uid, gid)
 
         for dirpath, l_directories, l_files in os.walk(directory_to_traverse):
             for cur_dir in l_directories:
-                logging.debug("Setting path: " + cur_dir + " to permissions value: " + str(cfg["CHMOD_VALUE"]))
+                logging.debug(
+                    "Setting path: "
+                    + cur_dir
+                    + " to permissions value: "
+                    + str(cfg["CHMOD_VALUE"])
+                )
                 os.chmod(os.path.join(dirpath, cur_dir), corrected_chmod_value)
                 if job.config.SET_MEDIA_OWNER:
                     os.chown(os.path.join(dirpath, cur_dir), uid, gid)
             for cur_file in l_files:
-                logging.debug("Setting file: " + cur_file + " to permissions value: " + str(cfg["CHMOD_VALUE"]))
+                logging.debug(
+                    "Setting file: "
+                    + cur_file
+                    + " to permissions value: "
+                    + str(cfg["CHMOD_VALUE"])
+                )
                 os.chmod(os.path.join(dirpath, cur_file), corrected_chmod_value)
                 if job.config.SET_MEDIA_OWNER:
                     os.chown(os.path.join(dirpath, cur_file), uid, gid)
@@ -375,7 +418,9 @@ def check_db_version(install_path, db_file):
             flask_migrate.upgrade(mig_dir)
 
         if not os.path.isfile(db_file):
-            logging.error("Can't create database file.  This could be a permissions issue.  Exiting...")
+            logging.error(
+                "Can't create database file.  This could be a permissions issue.  Exiting..."
+            )
             sys.exit()
 
     # check to see if db is at current revision
@@ -392,24 +437,41 @@ def check_db_version(install_path, db_file):
         logging.info("Database is up to date")
     else:
         logging.info(
-            "Database out of date. Head is " + head_revision + " and database is " + db_version
-            + ".  Upgrading database...")
+            "Database out of date. Head is "
+            + head_revision
+            + " and database is "
+            + db_version
+            + ".  Upgrading database..."
+        )
         with app.app_context():
             ts = round(time.time() * 100)
-            logging.info("Backuping up database '" + db_file + "' to '" + db_file + str(ts) + "'.")
+            logging.info(
+                "Backuping up database '"
+                + db_file
+                + "' to '"
+                + db_file
+                + str(ts)
+                + "'."
+            )
             shutil.copy(db_file, db_file + "_" + str(ts))
             flask_migrate.upgrade(mig_dir)
         logging.info("Upgrade complete.  Validating version level...")
 
-        c.execute("SELECT {cn} FROM {tn}".format(tn="alembic_version", cn="version_num"))
+        c.execute(
+            "SELECT {cn} FROM {tn}".format(tn="alembic_version", cn="version_num")
+        )
         db_version = c.fetchone()[0]
         logging.debug("Database version is: " + db_version)
         if head_revision == db_version:
             logging.info("Database is now up to date")
         else:
             logging.error(
-                "Database is still out of date. Head is " + head_revision + " and database is " + db_version
-                + ".  Exiting arm.")
+                "Database is still out of date. Head is "
+                + head_revision
+                + " and database is "
+                + db_version
+                + ".  Exiting arm."
+            )
             sys.exit()
 
 
@@ -429,7 +491,8 @@ def put_track(job, t_no, seconds, aspect, fps, mainfeature, source, filename="")
 
     logging.debug(
         f"Track #{int(t_no):02} Length: {seconds: >4} fps: {float(fps):2.3f} "
-        f"aspect: {aspect: >4} Mainfeature: {mainfeature} Source: {source}")
+        f"aspect: {aspect: >4} Mainfeature: {mainfeature} Source: {source}"
+    )
 
     t = m.Track(
         job_id=job.job_id,
@@ -440,9 +503,9 @@ def put_track(job, t_no, seconds, aspect, fps, mainfeature, source, filename="")
         main_feature=mainfeature,
         source=source,
         basename=job.title,
-        filename=filename
+        filename=filename,
     )
-    t.ripped = True if seconds > int(cfg['MINLENGTH']) else False
+    t.ripped = True if seconds > int(cfg["MINLENGTH"]) else False
     db.session.add(t)
     db.session.commit()
 
@@ -459,19 +522,21 @@ def arm_setup():
     """
     try:
         # Make the Raw dir if it doesnt exist
-        if not os.path.exists(cfg['RAW_PATH']):
-            os.makedirs(cfg['RAW_PATH'])
+        if not os.path.exists(cfg["RAW_PATH"]):
+            os.makedirs(cfg["RAW_PATH"])
         # Make the Transcode dir if it doesnt exist
-        if not os.path.exists(cfg['TRANSCODE_PATH']):
-            os.makedirs(cfg['TRANSCODE_PATH'])
+        if not os.path.exists(cfg["TRANSCODE_PATH"]):
+            os.makedirs(cfg["TRANSCODE_PATH"])
         # Make the Complete dir if it doesnt exist
-        if not os.path.exists(cfg['COMPLETED_PATH']):
-            os.makedirs(cfg['COMPLETED_PATH'])
+        if not os.path.exists(cfg["COMPLETED_PATH"]):
+            os.makedirs(cfg["COMPLETED_PATH"])
         # Make the log dir if it doesnt exist
-        if not os.path.exists(cfg['LOGPATH']):
-            os.makedirs(cfg['LOGPATH'])
+        if not os.path.exists(cfg["LOGPATH"]):
+            os.makedirs(cfg["LOGPATH"])
     except IOError as e:  # noqa: F841
-        logging.error(f"A fatal error has occurred.  Cant find/create the folders from arm.yaml - Error:{e}")
+        logging.error(
+            f"A fatal error has occurred.  Cant find/create the folders from arm.yaml - Error:{e}"
+        )
 
 
 def database_updater(args, job, wait_time=90):
@@ -521,12 +586,16 @@ def database_adder(obj_class):
                 logging.error(f"Error: {e}")
                 raise RuntimeError(str(e))
         else:
-            logging.debug(f"successfully written {type(obj_class).__name__} to the database")
+            logging.debug(
+                f"successfully written {type(obj_class).__name__} to the database"
+            )
             return True
 
 
 def clean_old_jobs():
-    a_jobs = db.session.query(m.Job).filter(m.Job.status.notin_(['fail', 'success'])).all()
+    a_jobs = (
+        db.session.query(m.Job).filter(m.Job.status.notin_(["fail", "success"])).all()
+    )
     # Clean up abandoned jobs
     for j in a_jobs:
         if psutil.pid_exists(j.pid):
@@ -534,8 +603,10 @@ def clean_old_jobs():
             if j.pid_hash == hash(p):
                 logging.info(f"Job #{j.job_id} with PID {j.pid} is currently running.")
         else:
-            logging.info(f"Job #{j.job_id} with PID {j.pid} has been abandoned."
-                         f"Updating job status to fail.")
+            logging.info(
+                f"Job #{j.job_id} with PID {j.pid} has been abandoned."
+                f"Updating job status to fail."
+            )
             j.status = "fail"
             db.session.commit()
 
@@ -554,7 +625,9 @@ def job_dupe_check(job):
     if job.crc_id is None:
         return False, None
     logging.debug(f"trying to find jobs with crc64={job.crc_id}")
-    previous_rips = m.Job.query.filter_by(crc_id=job.crc_id, status="success", hasnicetitle=True)
+    previous_rips = m.Job.query.filter_by(
+        crc_id=job.crc_id, status="success", hasnicetitle=True
+    )
     r = {}
     i = 0
     for j in previous_rips:
@@ -569,14 +642,18 @@ def job_dupe_check(job):
     if r:
         logging.debug(f"we have {len(r)} jobs")
         # This might need some tweaks to because of title/year manual
-        title = r[0]['title'] if r[0]['title'] else job.label
-        year = r[0]['year'] if r[0]['year'] != "" else ""
-        poster_url = r[0]['poster_url'] if r[0]['poster_url'] != "" else None
-        hasnicetitle = bool(r[0]['hasnicetitle']) if r[0]['hasnicetitle'] else False
-        video_type = r[0]['video_type'] if r[0]['hasnicetitle'] != "" else "unknown"
+        title = r[0]["title"] if r[0]["title"] else job.label
+        year = r[0]["year"] if r[0]["year"] != "" else ""
+        poster_url = r[0]["poster_url"] if r[0]["poster_url"] != "" else None
+        hasnicetitle = bool(r[0]["hasnicetitle"]) if r[0]["hasnicetitle"] else False
+        video_type = r[0]["video_type"] if r[0]["hasnicetitle"] != "" else "unknown"
         active_rip = {
-            "title": title, "year": year, "poster_url": poster_url, "hasnicetitle": hasnicetitle,
-            "video_type": video_type}
+            "title": title,
+            "year": year,
+            "poster_url": poster_url,
+            "hasnicetitle": hasnicetitle,
+            "video_type": video_type,
+        }
         database_updater(active_rip, job)
         return True, r
 
@@ -586,28 +663,29 @@ def job_dupe_check(job):
 
 def check_ip():
     """
-        Check if user has set an ip in the config file
-        if not gets the most likely ip
-        arguments:
-        none
-        return: the ip of the host or 127.0.0.1
+    Check if user has set an ip in the config file
+    if not gets the most likely ip
+    arguments:
+    none
+    return: the ip of the host or 127.0.0.1
     """
-    host = cfg['WEBSERVER_IP']
-    if host == 'x.x.x.x':
+    host = cfg["WEBSERVER_IP"]
+    if host == "x.x.x.x":
         # autodetect host IP address
         from netifaces import interfaces, ifaddresses, AF_INET
+
         ip_list = []
         for interface in interfaces():
             inet_links = ifaddresses(interface).get(AF_INET, [])
             for link in inet_links:
-                ip = link['addr']
+                ip = link["addr"]
                 # print(str(ip))
-                if ip != '127.0.0.1' and not (ip.startswith('172')):
+                if ip != "127.0.0.1" and not (ip.startswith("172")):
                     ip_list.append(ip)
                     # print(str(ip))
         if len(ip_list) > 0:
             return ip_list[0]
         else:
-            return '127.0.0.1'
+            return "127.0.0.1"
     else:
         return host

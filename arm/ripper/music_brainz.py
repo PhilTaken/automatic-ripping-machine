@@ -19,7 +19,7 @@ def main(disc):
     or "".
     """
     discid = get_disc_id(disc)
-    if cfg['GET_AUDIO_TITLE'] == 'musicbrainz':
+    if cfg["GET_AUDIO_TITLE"] == "musicbrainz":
         return music_brainz(discid, disc)
     else:
         return ""
@@ -44,41 +44,45 @@ def music_brainz(discid, job):
     """
     mb.set_useragent("arm", "v2.6")
     try:
-        infos = mb.get_releases_by_discid(discid, includes=['artist-credits'])
+        infos = mb.get_releases_by_discid(discid, includes=["artist-credits"])
         logging.debug("Infos: %s", infos)
         logging.debug("discid = " + str(discid))
-        release = infos['disc']['release-list'][0]
+        release = infos["disc"]["release-list"][0]
         # Clean up the date and the title
-        if 'date' in release:
-            new_year = str(release['date'])
+        if "date" in release:
+            new_year = str(release["date"])
             new_year = re.sub("-[0-9]{2}-[0-9]{2}$", "", new_year)
         else:
             # sometimes there is no date in a release
             new_year = ""
-        title = str(release.get('title', 'no title'))
+        title = str(release.get("title", "no title"))
         # Set out release id as the CRC_ID
         # job.crc_id = release['id']
         # job.hasnicetitle = True
         args = {
-            'job_id': str(job.job_id),
-            'crc_id': release['id'],
-            'hasnicetitle': True,
-            'year': str(new_year),
-            'year_auto': str(new_year),
-            'title': title,
-            'title_auto': title
+            "job_id": str(job.job_id),
+            "crc_id": release["id"],
+            "hasnicetitle": True,
+            "year": str(new_year),
+            "year_auto": str(new_year),
+            "title": title,
+            "title_auto": title,
         }
         u.database_updater(args, job)
-        logging.debug("musicbrain works -  New title is " + title + ".  New Year is: " + new_year)
+        logging.debug(
+            "musicbrain works -  New title is " + title + ".  New Year is: " + new_year
+        )
     except mb.WebServiceError as exc:
         logging.error("Cant reach MB or cd not found ? - ERROR: " + str(exc))
         u.database_updater(False, job)
         return ""
     try:
         # We never make it to here if the mb fails
-        artist = release['artist-credit'][0]['artist']['name']
+        artist = release["artist-credit"][0]["artist"]["name"]
         logging.debug("artist=====" + str(artist))
-        logging.debug("do have artwork?======" + str(release['cover-art-archive']['artwork']))
+        logging.debug(
+            "do have artwork?======" + str(release["cover-art-archive"]["artwork"])
+        )
         # Get our front cover if it exists
         if get_cd_art(job, infos):
             logging.debug("we got an art image")
@@ -87,12 +91,12 @@ def music_brainz(discid, job):
         # Set up the database properly for music cd's
         artist_title = artist + " " + title
         args = {
-            'job_id': str(job.job_id),
-            'year': new_year,
-            'year_auto': new_year,
-            'title': artist_title,
-            'title_auto': artist_title,
-            'no_of_titles': infos['disc']['offset-count']
+            "job_id": str(job.job_id),
+            "year": new_year,
+            "year_auto": new_year,
+            "title": artist_title,
+            "title_auto": artist_title,
+            "no_of_titles": infos["disc"]["offset-count"],
         }
         u.database_updater(args, job)
     except Exception as exc:
@@ -103,15 +107,15 @@ def music_brainz(discid, job):
 
 
 def clean_for_log(string):
-    """ Cleans up string for use in filename """
-    string = re.sub('\\[(.*?)]', '', string)
-    string = re.sub('\\s+', ' ', string)
-    string = string.replace(' : ', ' - ')
-    string = string.replace(':', '-')
-    string = string.replace('&', 'and')
+    """Cleans up string for use in filename"""
+    string = re.sub("\\[(.*?)]", "", string)
+    string = re.sub("\\s+", " ", string)
+    string = string.replace(" : ", " - ")
+    string = string.replace(":", "-")
+    string = string.replace("&", "and")
     string = string.replace("\\", " - ")
     string = string.strip()
-    return re.sub('[^\\w.() -]', '', string)
+    return re.sub("[^\\w.() -]", "", string)
 
 
 def get_title(discid, job):
@@ -127,16 +131,18 @@ def get_title(discid, job):
     """
     mb.set_useragent("arm", "v1.0")
     try:
-        infos = mb.get_releases_by_discid(discid, includes=['artist-credits'])
-        title = str(infos['disc']['release-list'][0]['title'])
+        infos = mb.get_releases_by_discid(discid, includes=["artist-credits"])
+        title = str(infos["disc"]["release-list"][0]["title"])
         # Start setting our db stuff
-        artist = str(infos['disc']['release-list'][0]['artist-credit'][0]['artist']['name'])
+        artist = str(
+            infos["disc"]["release-list"][0]["artist-credit"][0]["artist"]["name"]
+        )
         clean_title = clean_for_log(artist) + "-" + clean_for_log(title)
         args = {
-            'crc_id': str(infos['disc']['release-list'][0]['id']),
-            'title': str(artist + " " + title),
-            'title_auto': str(artist + " " + title),
-            'video_type': "Music"
+            "crc_id": str(infos["disc"]["release-list"][0]["id"]),
+            "title": str(artist + " " + title),
+            "title_auto": str(artist + " " + title),
+            "video_type": "Music",
         }
         u.database_updater(args, job)
         return clean_title
@@ -155,14 +161,14 @@ def get_cd_art(job, infos):
     """
     try:
         # Use the build-in images from coverartarchive if available
-        if infos['disc']['release-list'][0]['cover-art-archive']['artwork'] != "false":
+        if infos["disc"]["release-list"][0]["cover-art-archive"]["artwork"] != "false":
             artlist = mb.get_image_list(job.crc_id)
             for image in artlist["images"]:
                 # We dont care if its verified ?
                 if "image" in image:
                     args = {
-                        'poster_url': str(image["image"]),
-                        'poster_url_auto': str(image["image"])
+                        "poster_url": str(image["image"]),
+                        "poster_url_auto": str(image["image"]),
                     }
                     u.database_updater(args, job)
                     return True
@@ -171,15 +177,15 @@ def get_cd_art(job, infos):
         logging.error("get_cd_art ERROR: " + str(exc))
     try:
         # This uses roboBrowser to grab the amazon/3rd party image if it exists
-        browser = RoboBrowser(user_agent='ARM-v2_devel')
-        browser.open('https://musicbrainz.org/release/' + job.crc_id)
-        img = browser.select('.cover-art img')
+        browser = RoboBrowser(user_agent="ARM-v2_devel")
+        browser.open("https://musicbrainz.org/release/" + job.crc_id)
+        img = browser.select(".cover-art img")
         # [<img src="https://images-eu.ssl-images-amazon.com/images/I/41SN9FK5ATL.jpg"/>]
         # img[0].text
         args = {
-            'poster_url': str(re.search(r'<img src="(.*)"', str(img)).group(1)),
-            'poster_url_auto': str(re.search(r'<img src="(.*)"', str(img)).group(1)),
-            'video_type': "Music"
+            "poster_url": str(re.search(r'<img src="(.*)"', str(img)).group(1)),
+            "poster_url_auto": str(re.search(r'<img src="(.*)"', str(img)).group(1)),
+            "video_type": "Music",
         }
         u.database_updater(args, job)
         if job.poster_url != "":

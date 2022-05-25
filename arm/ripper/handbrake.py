@@ -7,6 +7,7 @@ import logging
 import subprocess
 import re
 import shlex
+
 # Added for sleep check/ transcode limits
 import time  # noqa: F401
 import datetime  # noqa: F401
@@ -32,11 +33,11 @@ def handbrake_mainfeature(srcpath, basepath, logfile, job):
     logging.debug("Handbrake starting: ")
     logging.debug("\n\r" + job.pretty_table())
 
-    utils.database_updater({'status': "waiting_transcode"}, job)
+    utils.database_updater({"status": "waiting_transcode"}, job)
     # TODO: send a notification that jobs are waiting ?
     utils.sleep_check_process("HandBrakeCLI", int(cfg["MAX_CONCURRENT_TRANSCODES"]))
     logging.debug("Setting job status to 'transcoding'")
-    utils.database_updater({'status': "transcoding"}, job)
+    utils.database_updater({"status": "transcoding"}, job)
     filename = os.path.join(basepath, job.title + "." + cfg["DEST_EXT"])
     filepathname = os.path.join(basepath, filename)
     logging.info(f"Ripping title Mainfeature to {shlex.quote(filepathname)}")
@@ -65,7 +66,7 @@ def handbrake_mainfeature(srcpath, basepath, logfile, job):
         shlex.quote(filepathname),
         hb_preset,
         hb_args,
-        logfile
+        logfile,
     )
 
     logging.debug(f"Sending command: {cmd}")
@@ -122,21 +123,31 @@ def handbrake_all(srcpath, basepath, logfile, job):
 
         if track.length < int(cfg["MINLENGTH"]):
             # too short
-            logging.info(f"Track #{track.track_number} of {job.no_of_titles}. "
-                         f"Length ({track.length}) is less than minimum length ({cfg['MINLENGTH']}).  Skipping")
+            logging.info(
+                f"Track #{track.track_number} of {job.no_of_titles}. "
+                f"Length ({track.length}) is less than minimum length ({cfg['MINLENGTH']}).  Skipping"
+            )
         elif track.length > int(cfg["MAXLENGTH"]):
             # too long
-            logging.info(f"Track #{track.track_number} of {job.no_of_titles}. "
-                         f"Length ({track.length}) is greater than maximum length ({cfg['MAXLENGTH']}).  Skipping")
+            logging.info(
+                f"Track #{track.track_number} of {job.no_of_titles}. "
+                f"Length ({track.length}) is greater than maximum length ({cfg['MAXLENGTH']}).  Skipping"
+            )
         else:
             # just right
-            logging.info(f"Processing track #{track.track_number} of {job.no_of_titles}. "
-                         f"Length is {track.length} seconds.")
+            logging.info(
+                f"Processing track #{track.track_number} of {job.no_of_titles}. "
+                f"Length is {track.length} seconds."
+            )
 
-            filename = "title_" + str.zfill(str(track.track_number), 2) + "." + cfg["DEST_EXT"]
+            filename = (
+                "title_" + str.zfill(str(track.track_number), 2) + "." + cfg["DEST_EXT"]
+            )
             filepathname = os.path.join(basepath, filename)
 
-            logging.info(f"Transcoding title {track.track_number} to {shlex.quote(filepathname)}")
+            logging.info(
+                f"Transcoding title {track.track_number} to {shlex.quote(filepathname)}"
+            )
 
             track.filename = track.orig_filename = filename
             db.session.commit()
@@ -148,21 +159,20 @@ def handbrake_all(srcpath, basepath, logfile, job):
                 hb_preset,
                 str(track.track_number),
                 hb_args,
-                logfile
+                logfile,
             )
 
             logging.debug(f"Sending command: {cmd}")
 
             try:
-                hb = subprocess.check_output(
-                    cmd,
-                    shell=True
-                ).decode("utf-8")
+                hb = subprocess.check_output(cmd, shell=True).decode("utf-8")
                 logging.debug(f"Handbrake exit code: {hb}")
                 track.status = "success"
             except subprocess.CalledProcessError as hb_error:
-                err = f"Handbrake encoding of title {track.track_number} failed with code: {hb_error.returncode}" \
-                      f"({hb_error.output})"
+                err = (
+                    f"Handbrake encoding of title {track.track_number} failed with code: {hb_error.returncode}"
+                    f"({hb_error.output})"
+                )
                 logging.error(err)
                 track.status = "fail"
                 track.error = err
@@ -203,7 +213,9 @@ def handbrake_mkv(srcpath, basepath, logfile, job):
         filename = os.path.join(basepath, destfile + "." + cfg["DEST_EXT"])
         filepathname = os.path.join(basepath, filename)
 
-        logging.info(f"Transcoding file {shlex.quote(f)} to {shlex.quote(filepathname)}")
+        logging.info(
+            f"Transcoding file {shlex.quote(f)} to {shlex.quote(filepathname)}"
+        )
 
         cmd = 'nice {0} -i {1} -o {2} --preset "{3}" {4}>> {5} 2>&1'.format(
             cfg["HANDBRAKE_CLI"],
@@ -211,20 +223,19 @@ def handbrake_mkv(srcpath, basepath, logfile, job):
             shlex.quote(filepathname),
             hb_preset,
             hb_args,
-            logfile
+            logfile,
         )
 
         logging.debug(f"Sending command: {cmd}")
 
         try:
-            hb = subprocess.check_output(
-                cmd,
-                shell=True
-            ).decode("utf-8")
+            hb = subprocess.check_output(cmd, shell=True).decode("utf-8")
             logging.debug(f"Handbrake exit code: {hb}")
         except subprocess.CalledProcessError as hb_error:
-            err = f"Handbrake encoding of file {shlex.quote(f)} failed with code: {hb_error.returncode}" \
-                  f"({hb_error.output})"
+            err = (
+                f"Handbrake encoding of file {shlex.quote(f)} failed with code: {hb_error.returncode}"
+                f"({hb_error.output})"
+            )
             logging.error(err)
             # job.errors.append(f)
 
@@ -239,15 +250,17 @@ def get_track_info(srcpath, job):
     :param job: Job instance\n
     :return: None
     """
-    logging.info("Using HandBrake to get information on all the tracks on the disc.  This will take a few minutes...")
+    logging.info(
+        "Using HandBrake to get information on all the tracks on the disc.  This will take a few minutes..."
+    )
 
     cmd = f'{cfg["HANDBRAKE_CLI"]} -i {shlex.quote(srcpath)} -t 0 --scan'
 
     logging.debug(f"Sending command: {cmd}")
     hb = handbrake_char_encoding(cmd)
 
-    t_pattern = re.compile(r'.*\+ title *')
-    pattern = re.compile(r'.*duration\:.*')
+    t_pattern = re.compile(r".*\+ title *")
+    pattern = re.compile(r".*duration\:.*")
     seconds = 0
     t_no = 0
     fps = float(0)
@@ -259,9 +272,9 @@ def get_track_info(srcpath, job):
         # get number of titles
         if result is None:
             if job.disctype == "bluray":
-                result = re.search('scan: BD has (.*) title\(s\)', line)  # noqa: W605
+                result = re.search("scan: BD has (.*) title\(s\)", line)  # noqa: W605
             else:
-                result = re.search('scan: DVD has (.*) title\(s\)', line)  # noqa: W605
+                result = re.search("scan: DVD has (.*) title\(s\)", line)  # noqa: W605
 
             if result:
                 titles = result.group(1)
@@ -275,23 +288,25 @@ def get_track_info(srcpath, job):
             if t_no == 0:
                 pass
             else:
-                utils.put_track(job, t_no, seconds, aspect, fps, mainfeature, "handbrake")
+                utils.put_track(
+                    job, t_no, seconds, aspect, fps, mainfeature, "handbrake"
+                )
 
             mainfeature = False
-            t_no = line.rsplit(' ', 1)[-1]
+            t_no = line.rsplit(" ", 1)[-1]
             t_no = t_no.replace(":", "")
 
         if (re.search(pattern, line)) is not None:
             t = line.split()
-            h, m, s = t[2].split(':')
+            h, m, s = t[2].split(":")
             seconds = int(h) * 3600 + int(m) * 60 + int(s)
 
         if (re.search("Main Feature", line)) is not None:
             mainfeature = True
 
         if (re.search(" fps", line)) is not None:
-            fps = line.rsplit(' ', 2)[-2]
-            aspect = line.rsplit(' ', 3)[-3]
+            fps = line.rsplit(" ", 2)[-2]
+            aspect = line.rsplit(" ", 3)[-3]
             aspect = str(aspect).replace(",", "")
 
     utils.put_track(job, t_no, seconds, aspect, fps, mainfeature, "handbrake")
@@ -306,25 +321,29 @@ def handbrake_char_encoding(cmd):
     charset_found = False
     hb = -1
     try:
-        hb = subprocess.check_output(
-            cmd,
-            stderr=subprocess.STDOUT,
-            shell=True
-        ).decode('utf-8', 'ignore').splitlines()
+        hb = (
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+            .decode("utf-8", "ignore")
+            .splitlines()
+        )
     except subprocess.CalledProcessError as hb_error:
-        logging.error("Couldn't find a valid track with utf-8 encoding. Trying with cp437")
+        logging.error(
+            "Couldn't find a valid track with utf-8 encoding. Trying with cp437"
+        )
         logging.error(f"Specific error is: {hb_error}")
     else:
         charset_found = True
     if not charset_found:
         try:
-            hb = subprocess.check_output(
-                cmd,
-                stderr=subprocess.STDOUT,
-                shell=True
-            ).decode('cp437').splitlines()
+            hb = (
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+                .decode("cp437")
+                .splitlines()
+            )
         except subprocess.CalledProcessError as hb_error:
-            logging.error("Couldn't find a valid track. Try running the command manually to see more specific errors.")
+            logging.error(
+                "Couldn't find a valid track. Try running the command manually to see more specific errors."
+            )
             logging.error(f"Specific error is: {hb_error}")
             # If it doesn't work now we either have bad encoding or HB has ran into issues
     return hb

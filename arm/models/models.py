@@ -11,8 +11,19 @@ from arm.config.config import cfg
 from flask_login import LoginManager, current_user, login_user, UserMixin  # noqa: F401
 from prettytable import PrettyTable
 
-hidden_attribs = ("OMDB_API_KEY", "EMBY_USERID", "EMBY_PASSWORD", "EMBY_API_KEY", "PB_KEY", "IFTTT_KEY", "PO_KEY",
-                  "PO_USER_KEY", "PO_APP_KEY", "ARM_API_KEY", "TMDB_API_KEY")
+hidden_attribs = (
+    "OMDB_API_KEY",
+    "EMBY_USERID",
+    "EMBY_PASSWORD",
+    "EMBY_API_KEY",
+    "PB_KEY",
+    "IFTTT_KEY",
+    "PO_KEY",
+    "PO_USER_KEY",
+    "PO_APP_KEY",
+    "ARM_API_KEY",
+    "TMDB_API_KEY",
+)
 HIDDEN_VALUE = "<hidden>"
 
 
@@ -53,8 +64,8 @@ class Job(db.Model):
     updated = db.Column(db.Boolean)
     pid = db.Column(db.Integer)
     pid_hash = db.Column(db.Integer)
-    tracks = db.relationship('Track', backref='job', lazy='dynamic')
-    config = db.relationship('Config', uselist=False, backref="job")
+    tracks = db.relationship("Track", backref="job", lazy="dynamic")
+    config = db.relationship("Config", uselist=False, backref="job")
 
     def __init__(self, devpath):
         """Return a disc object"""
@@ -64,15 +75,17 @@ class Job(db.Model):
         self.video_type = "unknown"
         self.ejected = False
         self.updated = False
-        if cfg['VIDEOTYPE'] != "auto":
-            self.video_type = cfg['VIDEOTYPE']
+        if cfg["VIDEOTYPE"] != "auto":
+            self.video_type = cfg["VIDEOTYPE"]
         self.parse_udev()
         self.get_pid()
 
         if self.disctype == "dvd" and not self.label:
             logging.info("No disk label Available. Trying lsdvd")
             command = f"lsdvd {devpath} | grep 'Disc Title' | cut -d ' ' -f 3-"
-            lsdvdlbl = str(subprocess.check_output(command, shell=True).strip(), 'utf-8')
+            lsdvdlbl = str(
+                subprocess.check_output(command, shell=True).strip(), "utf-8"
+            )
             self.label = lsdvdlbl
 
     def parse_udev(self):
@@ -121,7 +134,9 @@ class Job(db.Model):
             logging.debug("Found file: HVDVD_TS")
             # do something here too
         else:
-            logging.debug("Did not find valid dvd/bd files. Changing disctype to 'data'")
+            logging.debug(
+                "Did not find valid dvd/bd files. Changing disctype to 'data'"
+            )
             self.disctype = "data"
 
     def identify_audio_cd(self):
@@ -143,7 +158,7 @@ class Job(db.Model):
             logfile = f"{mb_title}.log"
             new_log_file = f"{mb_title}_{round(time.time() * 100)}.log"
 
-        temp_log_full = os.path.join(cfg['LOGPATH'], logfile)
+        temp_log_full = os.path.join(cfg["LOGPATH"], logfile)
         logfile = new_log_file if os.path.isfile(temp_log_full) else logfile
         return logfile
 
@@ -171,12 +186,12 @@ class Job(db.Model):
     def get_d(self):
         r = {}
         for key, value in self.__dict__.items():
-            if '_sa_instance_state' not in key:
+            if "_sa_instance_state" not in key:
                 r[str(key)] = str(value)
         return r
 
     def __repr__(self):
-        return '<Job {}>'.format(self.label)
+        return "<Job {}>".format(self.label)
 
     def eject(self):
         """Eject disc if it hasn't previously been ejected"""
@@ -196,7 +211,7 @@ class Job(db.Model):
 
 class Track(db.Model):
     track_id = db.Column(db.Integer, primary_key=True)
-    job_id = db.Column(db.Integer, db.ForeignKey('job.job_id'))
+    job_id = db.Column(db.Integer, db.ForeignKey("job.job_id"))
     track_number = db.Column(db.String(4))
     length = db.Column(db.Integer)
     aspect_ratio = db.Column(db.String(20))
@@ -211,7 +226,18 @@ class Track(db.Model):
     error = db.Column(db.Text)
     source = db.Column(db.String(32))
 
-    def __init__(self, job_id, track_number, length, aspect_ratio, fps, main_feature, source, basename, filename):
+    def __init__(
+        self,
+        job_id,
+        track_number,
+        length,
+        aspect_ratio,
+        fps,
+        main_feature,
+        source,
+        basename,
+        filename,
+    ):
         """Return a track object"""
         self.job_id = job_id
         self.track_number = track_number
@@ -225,12 +251,12 @@ class Track(db.Model):
         self.ripped = False
 
     def __repr__(self):
-        return '<Post {}>'.format(self.track_number)
+        return "<Post {}>".format(self.track_number)
 
 
 class Config(db.Model):
     CONFIG_ID = db.Column(db.Integer, primary_key=True)
-    job_id = db.Column(db.Integer, db.ForeignKey('job.job_id'))
+    job_id = db.Column(db.Integer, db.ForeignKey("job.job_id"))
     ARM_CHECK_UDF = db.Column(db.Boolean)
     GET_VIDEO_TITLE = db.Column(db.Boolean)
     SKIP_TRANSCODE = db.Column(db.Boolean)
@@ -342,7 +368,7 @@ class User(db.Model, UserMixin):
         self.hash = hashed
 
     def __repr__(self):
-        return '<User %r>' % (self.email)
+        return "<User %r>" % (self.email)
 
     def get_id(self):
         return self.user_id
@@ -364,8 +390,15 @@ class UISettings(db.Model):
     index_refresh = db.Column(db.Integer)
     database_limit = db.Column(db.Integer)
 
-    def __init__(self, use_icons=None, save_remote_images=None, bootstrap_skin=None, language=None, index_refresh=None,
-                 database_limit=None):
+    def __init__(
+        self,
+        use_icons=None,
+        save_remote_images=None,
+        bootstrap_skin=None,
+        language=None,
+        index_refresh=None,
+        database_limit=None,
+    ):
         self.use_icons = use_icons
         self.save_remote_images = save_remote_images
         self.bootstrap_skin = bootstrap_skin
@@ -374,7 +407,7 @@ class UISettings(db.Model):
         self.database_limit = database_limit
 
     def __repr__(self):
-        return '<UISettings %r>' % self.id
+        return "<UISettings %r>" % self.id
 
     def __str__(self):
         """Returns a string of the object"""
@@ -388,6 +421,6 @@ class UISettings(db.Model):
     def get_d(self):
         r = {}
         for key, value in self.__dict__.items():
-            if '_sa_instance_state' not in key:
+            if "_sa_instance_state" not in key:
                 r[str(key)] = str(value)
         return r
