@@ -43,9 +43,10 @@
 
     checks = {
       pylint = pkgs.runCommandNoCC "pylint" {
-        nativeBuildInputs = [ pkgs.arm-env ];
+        nativeBuildInputs = [ pkgs.arm-env pkgs.fd ];
         preferLocalBuild = true;
-        } "flake8 > $out";
+      } "flake8 >$out";
+
       evalnix = pkgs.runCommandNoCC "evalnix" {
         nativeBuildInputs = [ pkgs.fd ];
         preferLocalBuild = true;
@@ -53,4 +54,3 @@
     };
   });
 }
-
